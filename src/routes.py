@@ -3,12 +3,14 @@ from fastapi import Request, Form, APIRouter
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+from .config import Config
 from src.db.database import Database
 from src.utils.api import final_correcting
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-templates = Jinja2Templates(directory="public") 
+templates = Jinja2Templates(directory=Config.TEMPLATES_DIR) 
+
 
 @router.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -18,8 +20,8 @@ async def login_page(request: Request):
 @router.post("/login")
 async def login(request: Request, login: str = Form(...), password: str = Form(...)):
     username = None
-    async with Database() as db:
-        username = await db.check_auth(login=login, password=password)
+    db = request.app.state.db
+    username = await db.check_auth(login=login, password=password)
 
     if username:
         logger.info(f'User -{username}- has successfully logged in')
@@ -31,8 +33,8 @@ async def login(request: Request, login: str = Form(...), password: str = Form(.
 
 @router.get("/notes", response_class=HTMLResponse)
 async def notes(username: str, request: Request):
-    async with Database() as db:
-        user, notes = await db.get_user_notes(username)
+    db = request.app.state.db
+    user, notes = await db.get_user_notes(username)
 
     if user:
         return templates.TemplateResponse("notes.html", {"request": request, "username": user.username, "notes": notes})
@@ -41,14 +43,10 @@ async def notes(username: str, request: Request):
 
 
 @router.post("/add_note")
-async def add_note(
-    request: Request,
-    content: str = Form(...),  
-    username: str = Form(...)
-):
-    async with Database() as db:
-        correct_content = final_correcting(content)
-        note = await db.add_note(username=username, content=correct_content)
+async def add_note(request: Request, content: str = Form(...), username: str = Form(...)):
+    db = request.app.state.db
+    correct_content = final_correcting(content)
+    note = await db.add_note(username=username, content=correct_content)
 
     if not note:
         return {"error": "User not found"}

@@ -1,5 +1,5 @@
 import logging
-from asyncio import current_task
+from asyncio import current_task, sleep
 from sqlalchemy import MetaData, func
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import (create_async_engine, AsyncSession, 
@@ -10,33 +10,49 @@ from .models import Base, User, Note
 
 logger = logging.getLogger(__name__)
 
+
 class Database():
     def __init__(self):
-        try: 
-            self.engine = create_async_engine(Config.DATABASE_URL, echo=False)
-            self.metadata = MetaData()
+        self.engine = None 
+        self.metadata = None
+        self.session_maker = None
+        self.scoped_session = None
 
-            self.session_maker = async_sessionmaker(
-                bind=self.engine,
-                class_=AsyncSession,
-                expire_on_commit=False,
-            )
-            self.scoped_session = async_scoped_session(self.session_maker, scopefunc=current_task)
-        except Exception as e:
-            logger.error(f'Error in /__init__: {e}')
+    async def create_connection(self):
+        self.engine = create_async_engine(Config.DATABASE_URL, echo=False)
+        self.metadata = MetaData()
 
-    async def create_db(self):
-        try:
-            async with self.engine.begin() as connection:
-                await connection.run_sync(Base.metadata.create_all)
-        except Exception as e:
-            logger.error(f'Error in /create_db: {e}')
+        self.session_maker = async_sessionmaker(
+            bind=self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+        )
+        self.scoped_session = async_scoped_session(self.session_maker, scopefunc=current_task)
+
+        async with self.engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+
+
+    # async def create_db(self):
+    #     while True:
+    #         try:
+    #             async with self.engine.begin() as connection:
+    #                 status = await connection.run_sync(Base.metadata.create_all)
+    #                 logger.debug(f'After: {status}\n{Base.metadata.create_all}')
+    #                 if status:
+    #                     break
+    #                 else:
+    #                     logger.error('No connection to DB')
+    #                     await sleep(5)
+    #         except Exception as e:
+    #             logger.error(f'Error in /create_db: {e}')
+                # await sleep(5)
 
     async def __aenter__(self):
         try:
             if self.scoped_session is None:
                 raise Exception("Database is not defined")
-            return self
+            return self.scoped_session
         except Exception as e:
             logger.error(f'Error in /__aenter__: {e}')
     

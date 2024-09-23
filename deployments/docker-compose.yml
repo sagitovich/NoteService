@@ -1,0 +1,26 @@
+services:
+  kode_web_app: 
+    build: 
+      dockerfile: deployments/Dockerfile
+      context: ..
+    image: kode_test
+    container_name: kode_test
+    ports:
+      - "8000:8000" 
+    env_file:
+      - .env
+    volumes:
+      - ../logs:/app/logs
+    depends_on:
+      - database
+
+  database:
+    image: postgres:16
+    ports:
+      - "4444:5432"
+    environment:
+      POSTGRES_PASSWORD: postgresql
+      POSTGRES_USER: postgres
+      POSTGRES_DB: KODE
+    volumes:
+      - "../pgdata:/var/lib/postgresql/data"

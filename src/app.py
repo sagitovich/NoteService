@@ -7,12 +7,15 @@ from src.routes import router
 from src.utils.logger import setup_logging
 
 @asynccontextmanager
-async def app_life(_: FastAPI):
-    await init_db()
+async def app_life(app: FastAPI):
+    db = await init_db()
+    app.state.db = db 
     yield
 
-app = FastAPI(lifespan=app_life) 
+
+app = FastAPI(lifespan=app_life)
 app.include_router(router)
+
 
 if __name__ == "__main__":
     setup_logging()

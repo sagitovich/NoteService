@@ -1,14 +1,19 @@
+import logging
 import asyncio
+
 from .database import Database
 
-db = None
-
+logger = logging.getLogger(__name__)
 
 async def init_db():
-    global db 
-    while not db:
+    db = Database()
+    exist = False
+    while not exist:
         try:
-            db = Database()
-            await db.create_db()
-        except Exception:
+            await db.create_connection()
+            logger.info('DB has successful connection')
+            exist = True
+        except Exception as e:
+            logger.error(f'Error connection to DB: {e}')
             await asyncio.sleep(5)
+    return db
