@@ -3,8 +3,8 @@ from fastapi import Request, Form, APIRouter
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from db.database import Database
-from src.application.api import final_correcting
+from src.db.database import Database
+from src.utils.api import final_correcting
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

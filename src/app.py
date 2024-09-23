@@ -2,9 +2,9 @@ import uvicorn
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from db.db_init import init_db
+from src.db.db_init import init_db
 from src.routes import router
-from application.logger import setup_logging
+from src.utils.logger import setup_logging
 
 @asynccontextmanager
 async def app_life(_: FastAPI):

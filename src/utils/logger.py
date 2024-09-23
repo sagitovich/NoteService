@@ -2,9 +2,11 @@ import os
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+from src.config import Config
+
 
 def setup_logging():
-    log_dir = "../logs"
+    log_dir = os.path.join(Config.PROJECT_DIR, 'logs')
     os.makedirs(log_dir, exist_ok=True)
 
     log_file = os.path.join(log_dir, "app.log")
