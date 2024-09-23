@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Вход</title>
+    <style>
+        .error-message {
+            display: none; 
+            color: red;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Вход</h2>
+    
+    <div id="error-message" class="error-message">{{ error }}</div>
+
+    <form action="/login" method="post">
+        <p>
+            Логин:<br/>
+            <input name="login" />
+        </p>
+        <p>
+            Пароль:<br />
+            <input name="password" type="password" />
+        </p>
+        <p>
+            <button type="reset">Сбросить</button>
+            <button type="submit">Войти</button>
+        </p>
+    </form>
+
+    <script>
+        const errorMessage = "{{ error }}";
+        if (errorMessage) {
+            const messageDiv = document.getElementById('error-message');
+            messageDiv.style.display = 'block'; 
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
