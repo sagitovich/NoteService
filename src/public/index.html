@@ -16,14 +16,14 @@
     
     <div id="error-message" class="error-message">{{ error }}</div>
 
-    <form action="/login" method="post">
+    <form id="login-form">
         <p>
             Логин:<br/>
-            <input name="login" />
+            <input name="login" required />
         </p>
         <p>
             Пароль:<br />
-            <input name="password" type="password" />
+            <input name="password" type="password" required />
         </p>
         <p>
             <button type="reset">Сбросить</button>
@@ -32,14 +32,37 @@
     </form>
 
     <script>
-        const errorMessage = "{{ error }}";
-        if (errorMessage) {
-            const messageDiv = document.getElementById('error-message');
-            messageDiv.style.display = 'block'; 
-            setTimeout(() => {
-                messageDiv.style.display = 'none';
-            }, 2500);
-        }
+        document.getElementById('login-form').addEventListener('submit', async (event) => {
+            event.preventDefault(); 
+            const formData = new FormData(event.target);
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                console.log('Response data:', data);  // Отладочная информация
+
+                if (response.ok && data.access_token) {
+                    // Сохранение токена в куки
+                    document.cookie = `access_token=${data.access_token}; path=/; max-age=3600`; // Токен сохраняется на 1 час
+                    console.log('Token saved in cookie:', data.access_token);
+
+                    window.location.href = '/notes';
+                } else {
+                    const messageDiv = document.getElementById('error-message');
+                    messageDiv.textContent = data.error || 'Ошибка входа'; 
+                    messageDiv.style.display = 'block'; 
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 2500);
+                }
+            } catch (error) {
+                console.error('Ошибка при выполнении запроса:', error);
+            }
+        });
     </script>
 </body>
 </html>

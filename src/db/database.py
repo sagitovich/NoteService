@@ -1,7 +1,7 @@
 import logging
-from asyncio import current_task, sleep
-from sqlalchemy import MetaData, func
+from asyncio import current_task
 from sqlalchemy.future import select
+from sqlalchemy import MetaData, func
 from sqlalchemy.ext.asyncio import (create_async_engine, AsyncSession, 
                                     async_sessionmaker, async_scoped_session)
 
@@ -32,22 +32,6 @@ class Database():
         async with self.engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
 
-
-    # async def create_db(self):
-    #     while True:
-    #         try:
-    #             async with self.engine.begin() as connection:
-    #                 status = await connection.run_sync(Base.metadata.create_all)
-    #                 logger.debug(f'After: {status}\n{Base.metadata.create_all}')
-    #                 if status:
-    #                     break
-    #                 else:
-    #                     logger.error('No connection to DB')
-    #                     await sleep(5)
-    #         except Exception as e:
-    #             logger.error(f'Error in /create_db: {e}')
-                # await sleep(5)
-
     async def __aenter__(self):
         try:
             if self.scoped_session is None:
@@ -73,7 +57,6 @@ class Database():
             async with self.scoped_session() as session:
                 user_query = await session.execute(select(User).filter(User.username == username))
                 user = user_query.scalar_one_or_none()
-
                 if user:
                     notes_query = await session.execute(select(Note).filter(Note.user_id == user.id))
                     notes = notes_query.scalars().all()

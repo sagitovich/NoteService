@@ -1,11 +1,12 @@
 import logging
-from fastapi import Request, Form, APIRouter
+from fastapi import Request, Form, APIRouter, Depends
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 from .config import Config
 from src.db.database import Database
 from src.utils.api import final_correcting
+from .auth import verify_token, create_access_token
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -19,22 +20,22 @@ async def login_page(request: Request):
 
 @router.post("/login")
 async def login(request: Request, login: str = Form(...), password: str = Form(...)):
-    username = None
-    db = request.app.state.db
+    db: Database = request.app.state.db
     username = await db.check_auth(login=login, password=password)
 
-    if username:
-        logger.info(f'User -{username}- has successfully logged in')
-        return RedirectResponse(url=f"/notes?username={username}", status_code=302)
-    else:
-        logger.warning(f'User -{username}- has input incorrect data')
+    if not username:
+        logger.warning(f'User -{username}- provided incorrect credentials')
         return templates.TemplateResponse("index.html", {"request": request, "error": "Неверный логин или пароль"})
+    
+    logger.info(f'User -{username}- has successfully logged in')
+    access_token = create_access_token(data={"sub": username}) 
+    return JSONResponse(content={"access_token": access_token}, status_code=200)
 
 
 @router.get("/notes", response_class=HTMLResponse)
-async def notes(username: str, request: Request):
-    db = request.app.state.db
-    user, notes = await db.get_user_notes(username)
+async def notes(request: Request, payload: dict = Depends(verify_token)):
+    db: Database = request.app.state.db
+    user, notes = await db.get_user_notes(payload.get("sub"))
 
     if user:
         return templates.TemplateResponse("notes.html", {"request": request, "username": user.username, "notes": notes})
@@ -43,8 +44,9 @@ async def notes(username: str, request: Request):
 
 
 @router.post("/add_note")
-async def add_note(request: Request, content: str = Form(...), username: str = Form(...)):
-    db = request.app.state.db
+async def add_note(request: Request, content: str = Form(...), payload: dict = Depends(verify_token)):
+    db: Database = request.app.state.db
+    username = payload.get("sub")
     correct_content = final_correcting(content)
     note = await db.add_note(username=username, content=correct_content)
 

@@ -8,7 +8,7 @@
     <h2>Привет, {{ username }}!</h2>
     
     <h3>Твои заметки:</h3>
-    <ul>
+    <ul id="notes-list">
         {% for note in notes %}
             <li>{{ note.content }}</li>
         {% else %}
@@ -17,15 +17,42 @@
     </ul>
 
     <h3>Добавить новую заметку:</h3>
-    <form action="/add_note" method="post">
+    <form id="add-note-form">
         <p>
             Текст заметки:<br/>
             <input name="content" required/>
         </p>
-        <input type="hidden" name="username" value="{{ username }}">
         <p>
             <button type="submit">Добавить заметку</button>
         </p>
     </form>
+
+    <script>
+        document.getElementById('add-note-form').addEventListener('submit', async (event) => {
+            event.preventDefault(); 
+            
+            const formData = new FormData(event.target);
+            const token = localStorage.getItem('token');
+            
+            const response = await fetch('/add_note', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                location.reload();
+            } else {
+                const messageDiv = document.getElementById('error-message');
+                messageDiv.textContent = 'Ошибка при добавлении заметки';
+                messageDiv.style.display = 'block'; 
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 2500);
+            }
+        });
+    </script>
 </body>
 </html>

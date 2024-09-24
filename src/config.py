@@ -7,13 +7,20 @@ PROJECT_DIR = Path(__file__).parent.parent
 ENV_PATH = Path.joinpath(PROJECT_DIR, 'deployments/.env')
 load_dotenv(ENV_PATH)
 
-# TODO: split parameters from string to variable (db_password, db_login, db_name)
-
 
 @dataclass(frozen=True)
 class Config:
     PROJECT_DIR: Path = PROJECT_DIR
     TEMPLATES_DIR: Path = Path.joinpath(PROJECT_DIR, 'src/public')
-    DATABASE_URL = os.environ['DATABASE_URL']
     YANDEX_SPELLER_API = os.environ['YANDEX_SPELLER_API']
-    YANDEX_SPELLER_API = int(os.environ['MAX_REQUEST_SIZE'])
+    MAX_REQUEST_SIZE = int(os.environ['MAX_REQUEST_SIZE'])
+    SECRET_KEY = os.environ['SECRET_KEY']
+
+    DATABASE_BASE_URL = os.environ['DATABASE_BASE_URL']
+    DATABASE_USER = os.environ['DATABASE_USER']
+    DATABASE_PASSWORD = os.environ['DATABASE_PASSWORD']
+    DATABASE_HOST = os.environ['DATABASE_HOST']
+    DATABASE_NAME = os.environ['DATABASE_NAME']
+
+    DATABASE_URL = DATABASE_BASE_URL.format(DATABASE_USER, DATABASE_PASSWORD, 
+                            DATABASE_HOST, DATABASE_NAME)
